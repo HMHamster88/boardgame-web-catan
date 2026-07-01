@@ -5,6 +5,7 @@ import { CatanTerrainHexType } from "./types/catanTerrainHexType";
 import _ from "lodash";
 import type { CatanBuildIntObjectAction, CatanBuildRoadAction, CatanBuyDevelopmentCardAction, CatanDiscardResourceCards, CatanEmbarkAction, CatanEndTurnAction, CatanGenerateFieldAction, CatanMoveRobberAction, CatanRollDicesAction, CatanTradeAction, CatanTradeResponseAction, CatanUseDevelopmentCardAction, CatanUseResourceDevelopmentCardAction, CatanUseResourceTypeDevelopmentCardAction } from "./types/actions";
 import { addResources, checkDeal, findLongestRoad, getAllResourcesCount, getNonNullResurceTypes, getPlayerPrices, loaclityTypes, moveAllResourcesByType } from "./types/utils";
+import packageInfo from '../../package.json' with { type: 'json' };
 
 const embarkRoadsCount = 2
 const minLargestArmyCount = 3
@@ -17,6 +18,8 @@ export const CatanStaticSettings = {
 }
 
 export class CatanGameBackService implements GameBackService {
+    version = packageInfo.version
+    homepage = packageInfo.homepage
 
     startGame(game: Game, gameSettings: GameSettings): GameState {
         const settings = gameSettings as CatanGameSettings
