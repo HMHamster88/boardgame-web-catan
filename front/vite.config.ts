@@ -24,9 +24,6 @@ export default defineConfig({
         'catan-back': {
 
         },
-        lodash: {
-          generate: false
-        },
         '@oruga-ui/oruga-next': {
           generate: false
         }

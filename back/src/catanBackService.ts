@@ -1,8 +1,8 @@
-import { findByCoordsArray, GameStatusEnum, getEdgeNeighborhoodsPositions, getHexEdgesPositions, getHexNeighborhoodsPositions, getHexVerticesPositions, getShuffledArray, getVertexHexesPositions, handleMessage, isOutEdge, randomElement, rangeArray, recordAsArray, recordEntries, removeCopmarableElements, removeElement, Vector2D, type Game, type GameAction, type GameBackService, type GameContext, type GameSettings, type GameState, type MesasgeHandlers, type Vector2DLike } from "boardgame-web-common/back";
+import { findByCoordsArray, GameStatusEnum, getEdgeNeighborhoodsPositions, getHexEdgesPositions, getHexNeighborhoodsPositions, getHexVerticesPositions, getRandomInt, getShuffledArray, getVertexHexesPositions, handleMessage, isOutEdge, randomElement, rangeArray, recordAsArray, recordEntries, removeCopmarableElements, removeElement, Vector2D, type BotGameContext, type Game, type GameAction, type GameBackService, type GameContext, type GameSettings, type GameState, type MesasgeHandlers, type Vector2DLike } from "boardgame-web-common/back";
 import { CatanBuyItemType, CatanDevelopmentCardType, CatanDiceValue, CatanGamePhase, CatanIntersectionObjectType, CatanSpecialCard, CatanTradeType, developmentCardPoints, developmentCardSaves, developmentCardsCount, getBuyItems, initResources, intersectionObjectRoBuyItem, type CatanField, type CatanFieldGenerationSettings, type CatanGameSettings, type CatanGameStatistics, type CatanHarbour, type CatanIntersection, type CatanPlayerPrivateState, type CatanPlayerPublicState, type CatanPrivateGameState, type CatanPublicGameState, type CatanResources, type CatanRoad, type CatanTerrainHex } from "./types/types";
 import { CatanGameFieldType } from "./types/catanGameFieldType";
 import { CatanTerrainHexType } from "./types/catanTerrainHexType";
-import _ from "lodash";
+
 import type { CatanBuildIntObjectAction, CatanBuildRoadAction, CatanBuyDevelopmentCardAction, CatanDiscardResourceCards, CatanEmbarkAction, CatanEndTurnAction, CatanGenerateFieldAction, CatanMoveRobberAction, CatanRollDicesAction, CatanTradeAction, CatanTradeResponseAction, CatanUseDevelopmentCardAction, CatanUseResourceDevelopmentCardAction, CatanUseResourceTypeDevelopmentCardAction } from "./types/actions";
 import { addResources, checkDeal, findLongestRoad, getAllResourcesCount, getNonNullResurceTypes, getPlayerPrices, loaclityTypes, moveAllResourcesByType } from "./types/utils";
 import packageInfo from '../../package.json' with { type: 'json' };
@@ -41,7 +41,7 @@ export class CatanGameBackService implements GameBackService {
         const publicState: CatanPublicGameState = {
             field: settings.field,
             phase: CatanGamePhase.EMBARK_FIRST,
-            activePlayerIndex: _.random(0, game.players.length - 1),
+            activePlayerIndex: getRandomInt(0, game.players.length - 1),
             winnersIds: [],
             playersStates: publicPlayersStates,
             dices: {
@@ -177,7 +177,7 @@ export class CatanGameBackService implements GameBackService {
         const harbours: CatanHarbour[] = []
 
         while (harbourTypes.length) {
-            const index = _.random(0, outRoads.length - 1)
+            const index = getRandomInt(0, outRoads.length - 1)
             const harbourPos = outRoads[index]!
             const harborType = harbourTypes.pop()!
             const neighborhoodsPositions = getEdgeNeighborhoodsPositions(harbourPos)
@@ -301,8 +301,8 @@ export class CatanGameBackService implements GameBackService {
                 gameContext.gamePublicStateSync?.sendUpdate('dices')
                 await sleep(1000)
 
-                dices.redDice = _.random(CatanDiceValue.ONE, CatanDiceValue.SIX)
-                dices.yellowDice = _.random(CatanDiceValue.ONE, CatanDiceValue.SIX)
+                dices.redDice = getRandomInt(CatanDiceValue.ONE, CatanDiceValue.SIX)
+                dices.yellowDice = getRandomInt(CatanDiceValue.ONE, CatanDiceValue.SIX)
 
                 const allDiceValue = (publicState.dices.redDice as number) + (publicState.dices.yellowDice)
                 publicState.playerThrowedDices = true
@@ -627,7 +627,7 @@ export class CatanGameBackService implements GameBackService {
                         longestRoadPlayer.specialCards.push(CatanSpecialCard.LONGEST_ROAD)
                     }
                 }
-                publicState.longestRoad = _.cloneDeep(longestRoad)
+                publicState.longestRoad = structuredClone(longestRoad)
             }
 
         }
@@ -727,6 +727,10 @@ export class CatanGameBackService implements GameBackService {
             })
         }
         return initResources({})
+    }
+
+    async runBotsActions(botGameContext: BotGameContext): Promise<void> {
+        return
     }
 }
 

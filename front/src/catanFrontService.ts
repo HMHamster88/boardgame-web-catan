@@ -9,6 +9,7 @@ import StatisticsComponent from "./components/StatisticsComponent.vue";
 export const catanGameType = "CATAN"
 
 export class CatanFrontService implements GameFrontService {
+    canAddBot: boolean = false
     type: string = catanGameType
     settingsComponent: Component = CatanSettings
     gameViewComponent: Component = CatanGameView
