@@ -627,7 +627,7 @@ export class CatanGameBackService implements GameBackService {
                         longestRoadPlayer.specialCards.push(CatanSpecialCard.LONGEST_ROAD)
                     }
                 }
-                publicState.longestRoad = structuredClone(longestRoad)
+                publicState.longestRoad = JSON.parse(JSON.stringify(longestRoad))
             }
 
         }
