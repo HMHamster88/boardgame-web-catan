@@ -1,6 +1,6 @@
 <template>
     <div class="dice-container">
-        <div class="dice" id="dice" ref="dice">
+        <div class="dice" id="dice" ref="dice" :style="diceElementStyle">
             <div class="face front">
                 <div class="dot center big"></div>
             </div>
@@ -40,14 +40,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef, watch } from 'vue';
+import { computed } from 'vue';
 
 interface Rotaton {
     x: number
     y: number
 }
-
-const diceElement = useTemplateRef('dice')
 
 const resultRotations: Rotaton[] = [
     { x: 0, y: 0 },
@@ -84,25 +82,18 @@ const props = defineProps({
 
 let intervalId: any
 
-function starRollingAnimation() {
-    if (!diceElement.value) {
-        return
-    }
-    const style = diceElement.value.style
+function starRollingAnimation(style: any) {
     style.transition = "transform 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55)"
     const randomX = Math.floor(Math.random() * 720) + 360;
     const randomY = Math.floor(Math.random() * 720) + 360;
     style.transform = `rotateX(${randomX}deg) rotateY(${randomY}deg)`
 }
 
-watch(() => props.result, (newVal) => {
-    if (!diceElement.value) {
-        return
-    }
-    const style = diceElement.value.style
-    if (newVal == 0) {
-        starRollingAnimation()
-        intervalId = setInterval(() => starRollingAnimation(), 1500)
+const diceElementStyle = computed(() => {
+    const style: any = {}
+    if (props.result == 0) {
+        starRollingAnimation(style)
+        intervalId = setInterval(() => starRollingAnimation(style), 1500)
 
     } else {
         clearInterval(intervalId)
@@ -110,6 +101,7 @@ watch(() => props.result, (newVal) => {
         style.transition = "transform 0.5s ease-out"
         style.transform = `rotateX(${resultRotation.x}deg) rotateY(${resultRotation.y}deg)`
     }
+    return style
 })
 
 // @ts-ignore
