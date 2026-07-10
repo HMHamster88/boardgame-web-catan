@@ -46,7 +46,7 @@ import { computed, type PropType } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Player } from 'boardgame-web-common'
 import { filterRecord, partialRecordEntries, recordEntries } from 'boardgame-web-common'
-import { type CatanPlayerTradeOffer, type CatanResources, type CatanResourceType } from 'catan-back'
+import { TradeAnswerState, type CatanPlayerTradeOffer, type CatanResources, type CatanResourceType } from 'catan-back'
 import { resourcesImages } from './graphics'
 import ResorcesComponent from "./ResorcesComponent.vue";
 
@@ -125,7 +125,8 @@ const showDialog = computed(() => {
     if (props.playerTradeOffer.playerId == props.localPlayerId) {
         return false
     }
-    if (props.playerTradeOffer.rejectedPlayerIds.includes(props.localPlayerId)) {
+    const answer = props.playerTradeOffer.answers.find(pl => pl.playerId == props.localPlayerId)
+    if (answer && answer.state != TradeAnswerState.WAITING_FOR_ANSWER) {
         return false
     }
     return true

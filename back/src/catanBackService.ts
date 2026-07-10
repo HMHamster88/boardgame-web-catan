@@ -1,9 +1,9 @@
 import { findByCoordsArray, GameStatusEnum, getEdgeNeighborhoodsPositions, getHexEdgesPositions, getHexNeighborhoodsPositions, getHexVerticesPositions, getRandomInt, getShuffledArray, getVertexHexesPositions, handleMessage, isOutEdge, randomElement, rangeArray, recordAsArray, recordEntries, removeCopmarableElements, removeElement, Vector2D, type BotGameContext, type Game, type GameAction, type GameBackService, type GameContext, type GameSettings, type GameState, type MesasgeHandlers, type Vector2DLike } from "boardgame-web-common/back";
-import { CatanBuyItemType, CatanDevelopmentCardType, CatanDiceValue, CatanGamePhase, CatanIntersectionObjectType, CatanSpecialCard, CatanTradeType, developmentCardPoints, developmentCardSaves, developmentCardsCount, getBuyItems, initResources, intersectionObjectRoBuyItem, type CatanField, type CatanFieldGenerationSettings, type CatanGameSettings, type CatanGameStatistics, type CatanHarbour, type CatanIntersection, type CatanPlayerPrivateState, type CatanPlayerPublicState, type CatanPrivateGameState, type CatanPublicGameState, type CatanResources, type CatanRoad, type CatanTerrainHex } from "./types/types";
+import { CatanBuyItemType, CatanDevelopmentCardType, CatanDiceValue, CatanGamePhase, CatanIntersectionObjectType, CatanSpecialCard, CatanTradeType, developmentCardPoints, developmentCardSaves, developmentCardsCount, getBuyItems, initResources, intersectionObjectRoBuyItem, TradeAnswerState, type CatanField, type CatanFieldGenerationSettings, type CatanGameSettings, type CatanGameStatistics, type CatanHarbour, type CatanIntersection, type CatanPlayerPrivateState, type CatanPlayerPublicState, type CatanPlayerTradeOffer, type CatanPrivateGameState, type CatanPublicGameState, type CatanResources, type CatanRoad, type CatanTerrainHex } from "./types/types";
 import { CatanGameFieldType } from "./types/catanGameFieldType";
 import { CatanTerrainHexType } from "./types/catanTerrainHexType";
 
-import type { CatanBuildIntObjectAction, CatanBuildRoadAction, CatanBuyDevelopmentCardAction, CatanDiscardResourceCards, CatanEmbarkAction, CatanEndTurnAction, CatanGenerateFieldAction, CatanMoveRobberAction, CatanRollDicesAction, CatanTradeAction, CatanTradeResponseAction, CatanUseDevelopmentCardAction, CatanUseResourceDevelopmentCardAction, CatanUseResourceTypeDevelopmentCardAction } from "./types/actions";
+import type { CatanBuildIntObjectAction, CatanBuildRoadAction, CatanBuyDevelopmentCardAction, CatanDiscardResourceCards, CatanEmbarkAction, CatanEndTurnAction, CatanGenerateFieldAction, CatanMoveRobberAction, CatanRollDicesAction, CatanTradeAction, CatanTradeCloseAction, CatanTradeResponseAction, CatanUseDevelopmentCardAction, CatanUseResourceDevelopmentCardAction, CatanUseResourceTypeDevelopmentCardAction } from "./types/actions";
 import { addResources, checkDeal, findLongestRoad, getAllResourcesCount, getNonNullResurceTypes, getPlayerPrices, loaclityTypes, moveAllResourcesByType } from "./types/utils";
 import packageInfo from '../../package.json' with { type: 'json' };
 
@@ -228,6 +228,20 @@ export class CatanGameBackService implements GameBackService {
         const activePlayerPrivteState = privateState.playersStates[publicState.activePlayerIndex]
         const isActivePlayerAction = playerId == activePlayerId
 
+
+        const closeTrade = (tradeOffer: CatanPlayerTradeOffer, choosenPlayerId: string) => {
+            const tradePlayerState = privateState.playersStates.find(ps => ps.playerId == tradeOffer.playerId)!
+            const choosenPlayerState = privateState.playersStates.find(ps => ps.playerId == choosenPlayerId)!
+
+            this.removeResources(choosenPlayerState, tradeOffer.required)
+            this.addResourcesToPlayer(choosenPlayerState, tradeOffer.offered)
+
+            this.removeResources(tradePlayerState, tradeOffer.offered)
+            this.addResourcesToPlayer(tradePlayerState, tradeOffer.required)
+            publicState.playerTradeOffer = undefined
+            gameContext.sendNotify(tradeOffer.playerId, 'playerAcceptedDeal', { player: game.players.find(pl => pl.userId == choosenPlayerId)?.name })
+        }
+
         type catanActionTypes = CatanEmbarkAction |
             CatanRollDicesAction |
             CatanBuildRoadAction |
@@ -237,6 +251,7 @@ export class CatanGameBackService implements GameBackService {
             CatanMoveRobberAction |
             CatanTradeAction |
             CatanTradeResponseAction |
+            CatanTradeCloseAction |
             CatanBuyDevelopmentCardAction |
             CatanUseDevelopmentCardAction
 
@@ -500,7 +515,12 @@ export class CatanGameBackService implements GameBackService {
                         playerId: playerId,
                         offered: deal.offered,
                         required: deal.required,
-                        rejectedPlayerIds: []
+                        answers: game.players.filter(pl => pl.userId != playerId).map(pl => {
+                            return {
+                                playerId: pl.userId,
+                                state: TradeAnswerState.WAITING_FOR_ANSWER
+                            }
+                        })
                     }
                 }
             },
@@ -510,22 +530,33 @@ export class CatanGameBackService implements GameBackService {
                     console.debug('No active offer')
                     return
                 }
-                if (action.accepted) {
-                    const tradePlayerState = privateState.playersStates.find(ps => ps.playerId == tradeOffer.playerId)!
-                    this.removeResources(privatePlayerState, tradeOffer.required)
-                    this.addResourcesToPlayer(privatePlayerState, tradeOffer.offered)
+                const answer = tradeOffer.answers.find(pl => pl.playerId == playerId)!
+                answer.state = action.accepted ? TradeAnswerState.ACCEPTED : TradeAnswerState.REJECTED
 
-                    this.removeResources(tradePlayerState, tradeOffer.offered)
-                    this.addResourcesToPlayer(tradePlayerState, tradeOffer.required)
-                    publicState.playerTradeOffer = undefined
-                    gameContext.sendNotify(tradeOffer.playerId, 'playerAcceptedDeal', { player: game.players.find(pl => pl.userId == playerId)?.name })
-                } else {
-                    tradeOffer.rejectedPlayerIds.push(playerId)
-                    if (tradeOffer.rejectedPlayerIds.length >= game.players.length - 1) {
-                        gameContext.sendNotify(tradeOffer.playerId, 'playersRejectedDeal', undefined)
-                        publicState.playerTradeOffer = undefined
-                    }
+                if (tradeOffer.answers.some(answer => answer.state == TradeAnswerState.WAITING_FOR_ANSWER)) {
+                    return
                 }
+
+                // all players answered
+
+                if (tradeOffer.answers.every(answer => answer.state == TradeAnswerState.REJECTED)) {
+                    gameContext.sendNotify(tradeOffer.playerId, 'playersRejectedDeal', undefined)
+                    publicState.playerTradeOffer = undefined
+                }
+
+                const acceptedAnswers = tradeOffer.answers.filter(answer => answer.state == TradeAnswerState.ACCEPTED)
+
+                if (acceptedAnswers.length == 1) {
+                    closeTrade(tradeOffer, acceptedAnswers[0].playerId)
+                }
+            },
+            CatanTradeCloseAction: (action: CatanTradeCloseAction) => {
+                const tradeOffer = publicState.playerTradeOffer
+                if (!tradeOffer) {
+                    console.debug('No active offer')
+                    return
+                }
+                closeTrade(tradeOffer, action.playerId)
             },
             CatanBuyDevelopmentCardAction: (_action: CatanBuyDevelopmentCardAction) => {
                 if (privateState.developmentCardsDeck.length == 0) {

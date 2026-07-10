@@ -80,7 +80,7 @@
             @result="playerTradeOfferResult">
         </PlayerTradeOfferDialog>
         <TradeOfferAnswerDialog :players="game.players" :player-trade-offer="gameState.playerTradeOffer"
-            :local-player-id="localPlayer.userId"></TradeOfferAnswerDialog>
+            :local-player-id="localPlayer.userId" v-on:chose-trade-player="choseTradePlayer"></TradeOfferAnswerDialog>
     </div>
 </template>
 
@@ -117,6 +117,7 @@ import {
     type CatanMoveRobberAction,
     type CatanRollDicesAction,
     type CatanTradeAction,
+    type CatanTradeCloseAction,
     type CatanTradeResponseAction,
     type CatanUseDevelopmentCardAction
 } from "catan-back";
@@ -297,6 +298,15 @@ const highlightEdges = (position: Vector2DLike): boolean => {
 
 function useDevCard(action: CatanUseDevelopmentCardAction) {
     performAction<CatanUseDevelopmentCardAction>(action)
+}
+
+function choseTradePlayer(playerId: string) {
+    performAction<CatanTradeCloseAction>(
+        {
+            type: 'CatanTradeCloseAction',
+            playerId: playerId
+        }
+    )
 }
 
 const freeBuilding = computed(() => {

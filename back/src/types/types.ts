@@ -189,11 +189,22 @@ export interface CatanDices {
     yellowDice: CatanDiceValue
 }
 
+export enum TradeAnswerState {
+    WAITING_FOR_ANSWER = 'WAITING_FOR_ANSWER',
+    ACCEPTED = 'ACCEPTED',
+    REJECTED = 'REJECTED'
+}
+
+export interface TradeAnswer {
+    playerId: string,
+    state: TradeAnswerState
+}
+
 export interface CatanPlayerTradeOffer {
     playerId: string,
     offered: CatanResources
     required: CatanResources,
-    rejectedPlayerIds: string[]
+    answers: TradeAnswer[]
 }
 
 export interface CatanGameStatistics extends GameStatistics {

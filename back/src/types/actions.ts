@@ -71,3 +71,8 @@ export interface CatanTradeResponseAction extends GameAction {
     type: 'CatanTradeResponseAction'
     accepted: boolean
 }
+
+export interface CatanTradeCloseAction extends GameAction {
+    type: 'CatanTradeCloseAction'
+    playerId: string
+}
