@@ -1,28 +1,34 @@
 <template>
-    <o-dialog v-model:active="showDialog" modal :title="t('waitingForPlayerAnswers')" :closable="false"
-        :closeOnBackdrop="false" :closeOnEscape="false">
-        <div class="flex flex-col">
-            <div class="flex justify-center items-center gap-4 mb-8 flex-col">
-                <div>{{ t(status) }}</div>
-                <div v-for="answer in tradeAnswers" @click="answerClick(answer)"
-                    class="flex justify-center items-center gap-2" :style="answerStyle(answer)">
-                    <div>{{ answer.playerName }}</div>
-                    <div>
-                        <o-icon v-if="answer.state == TradeAnswerState.WAITING_FOR_ANSWER" spin
-                            icon="timer-sand-empty"></o-icon>
-                        <o-icon v-if="answer.state == TradeAnswerState.ACCEPTED" icon="check"
-                            variant="success"></o-icon>
-                        <o-icon v-if="answer.state == TradeAnswerState.REJECTED" icon="close" variant="danger"></o-icon>
+    <o-dialog v-model:active="showDialog" modal :title="t('waitingForPlayerAnswers')" :closable="true"
+        v-on:close="close" :closeOnBackdrop="false" :closeOnEscape="false">
+        <template #content>
+            <div class="flex flex-col">
+                <div class="flex justify-center items-center gap-4 mb-8 flex-col">
+                    <div>{{ t(status) }}</div>
+                    <div v-for="answer in tradeAnswers" @click="answerClick(answer)"
+                        class="flex justify-center items-center gap-2" :style="answerStyle(answer)">
+                        <div>{{ answer.playerName }}</div>
+                        <div>
+                            <o-icon v-if="answer.state == TradeAnswerState.WAITING_FOR_ANSWER" spin
+                                icon="timer-sand-empty"></o-icon>
+                            <o-icon v-if="answer.state == TradeAnswerState.ACCEPTED" icon="check"
+                                variant="success"></o-icon>
+                            <o-icon v-if="answer.state == TradeAnswerState.REJECTED" icon="close"
+                                variant="danger"></o-icon>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
+        <template #footer="{ close }">
+            <o-button :label="$t('reject')" @click="close()" />
+        </template>
     </o-dialog>
 </template>
 
 <script setup lang="ts">
 
-import { ODialog, OIcon } from '@oruga-ui/oruga-next';
+import { ODialog, OIcon, OButton } from '@oruga-ui/oruga-next';
 import { computed, type PropType } from 'vue'
 import { type CatanPlayerTradeOffer, type TradeAnswer, TradeAnswerState } from 'catan-back'
 import { useI18n } from 'vue-i18n'
@@ -70,6 +76,10 @@ const tradeAnswers = computed(() => {
     })
 })
 
+function close() {
+    emit('choseTradePlayer', undefined)
+}
+
 function answerClick(answer: TradeAnswerWithPlayerName) {
     if (answer.state != TradeAnswerState.ACCEPTED) {
         return
@@ -78,7 +88,7 @@ function answerClick(answer: TradeAnswerWithPlayerName) {
 }
 
 const emit = defineEmits({
-    choseTradePlayer(_playerId: string) {
+    choseTradePlayer(_playerId: string | undefined) {
         return true
     },
 })

@@ -229,7 +229,11 @@ export class CatanGameBackService implements GameBackService {
         const isActivePlayerAction = playerId == activePlayerId
 
 
-        const closeTrade = (tradeOffer: CatanPlayerTradeOffer, choosenPlayerId: string) => {
+        const closeTrade = (tradeOffer: CatanPlayerTradeOffer, choosenPlayerId: string | undefined) => {
+            if (!choosenPlayerId) {
+                publicState.playerTradeOffer = undefined
+                return
+            }
             const tradePlayerState = privateState.playersStates.find(ps => ps.playerId == tradeOffer.playerId)!
             const choosenPlayerState = privateState.playersStates.find(ps => ps.playerId == choosenPlayerId)!
 
@@ -542,12 +546,6 @@ export class CatanGameBackService implements GameBackService {
                 if (tradeOffer.answers.every(answer => answer.state == TradeAnswerState.REJECTED)) {
                     gameContext.sendNotify(tradeOffer.playerId, 'playersRejectedDeal', undefined)
                     publicState.playerTradeOffer = undefined
-                }
-
-                const acceptedAnswers = tradeOffer.answers.filter(answer => answer.state == TradeAnswerState.ACCEPTED)
-
-                if (acceptedAnswers.length == 1) {
-                    closeTrade(tradeOffer, acceptedAnswers[0].playerId)
                 }
             },
             CatanTradeCloseAction: (action: CatanTradeCloseAction) => {

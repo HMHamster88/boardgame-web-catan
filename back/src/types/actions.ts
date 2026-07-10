@@ -74,5 +74,5 @@ export interface CatanTradeResponseAction extends GameAction {
 
 export interface CatanTradeCloseAction extends GameAction {
     type: 'CatanTradeCloseAction'
-    playerId: string
+    playerId: string | undefined
 }

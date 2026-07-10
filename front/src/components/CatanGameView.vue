@@ -300,7 +300,7 @@ function useDevCard(action: CatanUseDevelopmentCardAction) {
     performAction<CatanUseDevelopmentCardAction>(action)
 }
 
-function choseTradePlayer(playerId: string) {
+function choseTradePlayer(playerId: string | undefined) {
     performAction<CatanTradeCloseAction>(
         {
             type: 'CatanTradeCloseAction',
